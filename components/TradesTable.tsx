@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { fetchTrades } from "@/lib/api";
 import type { Trade, TradesResponse, QueryParams, Person } from "@/lib/types";
 
@@ -249,6 +250,9 @@ export default function TradesTable({ params, onParamsChange }: TradesTableProps
             ? "Loading..."
             : `${offset + 1}–${Math.min(offset + (data?.returned ?? 0), total)} of ${total.toLocaleString()}`}
         </span>
+
+        <p className="text-xs text-zinc-600">Made with love by <Link className="underline" href="https://crnicholson.com">Charlie Nicholson.</Link> Open source on <Link className="underline" href="https://github.com/crnicholson/capitol-api">GitHub</Link></p>
+
         <div className="flex gap-2">
           <button
             onClick={() => onParamsChange({ offset: String(Math.max(0, offset - limit)) })}
