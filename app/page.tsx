@@ -5,6 +5,8 @@ import Header from "@/components/Header";
 import FilterBar from "@/components/FilterBar";
 import TradesTable from "@/components/TradesTable";
 import QueryBuilder from "@/components/QueryBuilder";
+import StaticModeBanner from "@/components/StaticModeBanner";
+import { IS_STATIC_MODE } from "@/lib/config";
 import type { QueryParams } from "@/lib/types";
 
 const DEFAULT_PARAMS: QueryParams = {
@@ -22,18 +24,21 @@ export default function Home() {
     setParams((prev) => ({ ...prev, ...updates }));
   }
 
+  const tab = IS_STATIC_MODE ? "trades" : activeTab;
+
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0a] text-zinc-200">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header activeTab={tab} onTabChange={setActiveTab} />
+      {IS_STATIC_MODE && <StaticModeBanner />}
 
-      {activeTab === "trades" && (
+      {tab === "trades" && (
         <>
           <FilterBar params={params} onChange={setParams} />
           <TradesTable params={params} onParamsChange={handleParamsChange} />
         </>
       )}
 
-      {activeTab === "explorer" && <QueryBuilder />}
+      {tab === "explorer" && <QueryBuilder />}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import { triggerRefresh } from "@/lib/api";
+import { IS_STATIC_MODE } from "@/lib/config";
 
 interface HeaderProps {
   activeTab: "trades" | "explorer";
@@ -38,25 +39,29 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           >
             Trades
           </button>
-          <button
-            onClick={() => onTabChange("explorer")}
-            className={`px-3 py-1 text-xs rounded cursor-pointer ${
-              activeTab === "explorer" ? "bg-zinc-800 text-white" : "text-zinc-500"
-            }`}
-          >
-            API Explorer
-          </button>
+          {!IS_STATIC_MODE && (
+            <button
+              onClick={() => onTabChange("explorer")}
+              className={`px-3 py-1 text-xs rounded cursor-pointer ${
+                activeTab === "explorer" ? "bg-zinc-800 text-white" : "text-zinc-500"
+              }`}
+            >
+              API Explorer
+            </button>
+          )}
         </nav>
       </div>
       <div className="flex items-center gap-4">
         <StatusBadge />
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="px-3 py-1 text-xs border border-zinc-800 text-zinc-500 rounded cursor-pointer disabled:text-zinc-700 disabled:border-zinc-900 disabled:cursor-default"
-        >
-          {refreshing ? "Starting..." : "Fetch Data"}
-        </button>
+        {!IS_STATIC_MODE && (
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="px-3 py-1 text-xs border border-zinc-800 text-zinc-500 rounded cursor-pointer disabled:text-zinc-700 disabled:border-zinc-900 disabled:cursor-default"
+          >
+            {refreshing ? "Starting..." : "Fetch Data"}
+          </button>
+        )}
       </div>
     </header>
   );
