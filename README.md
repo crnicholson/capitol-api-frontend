@@ -1,16 +1,22 @@
 # Capitol API Frontend
 
-Very simple frontend component for [Capitol API](https://github.com/crnicholson/capitol-api) to view data. 
+Very simple [frontend](https://capitol.crnicholson.com) component for [Capitol API](https://github.com/crnicholson/capitol-api) to view data. 
 
 ![image](demo.png)
 
-## API builder
+## API Builder
 
 If you want to play around with the API and learn how to use it, you can use this to build API queries. 
 
 ![api](api-builder.png)
 
 ## Usage
+
+### Use the Website
+
+[capitol.crnicholson.com](https://capitol.crnicholson.com).
+
+### Run Locally
 
 Run:
 
