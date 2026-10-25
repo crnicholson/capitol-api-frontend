@@ -23,6 +23,16 @@ function SortArrow({ active, order }: { active: boolean; order: string }) {
   return <span className="text-zinc-400 ml-1 text-xs font-light">{order === "desc" ? "↓" : "↑"}</span>;
 }
 
+function SortableHeader({ sortKey, label, currentSort, currentOrder, onSort }: { sortKey: string; label: string; currentSort: string; currentOrder: string; onSort: (key: string) => void }) {
+  return (
+    <th aria-sort={currentSort === sortKey ? currentOrder === "asc" ? "ascending" : "descending" : "none"} className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-400">
+      <button className="cursor-pointer" onClick={() => onSort(sortKey)}>
+        {label}<SortArrow active={currentSort === sortKey} order={currentOrder} />
+      </button>
+    </th>
+  );
+}
+
 function partyBadge(party: string) {
   if (party?.toLowerCase().startsWith("d"))
     return <span className="text-blue-400 font-mono text-xs">D</span>;
@@ -32,7 +42,7 @@ function partyBadge(party: string) {
 }
 
 function categoryColor(category: string) {
-  if (category === "buy") return "text-amber-400";
+  if (category === "buy") return "text-emerald-400";
   if (category === "sell") return "text-red-400";
   return "text-zinc-400";
 }
@@ -89,24 +99,22 @@ function PersonTooltip({ person, x, y }: { person: Person; x: number; y: number 
 }
 
 export default function TradesTable({ params, onParamsChange }: TradesTableProps) {
-  const [data, setData] = useState<TradesResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ key: string; data?: TradesResponse; error?: string } | null>(null);
   const [tooltip, setTooltip] = useState<{ person: Person; x: number; y: number } | null>(null);
+  const queryKey = JSON.stringify(params);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    fetchTrades(params)
-      .then((res) => { if (active) { setData(res); setLoading(false); } })
-      .catch((err) => { if (active) { setError(err.message); setLoading(false); } });
+    fetchTrades(JSON.parse(queryKey))
+      .then((data) => { if (active) setResult({ key: queryKey, data }); })
+      .catch((err) => { if (active) setResult({ key: queryKey, error: err.message }); });
     return () => { active = false; };
-  }, [
-    params.person, params.ticker, params.state, params.party,
-    params.category, params.type, params.from, params.to,
-    params.sort, params.order, params.limit, params.offset, params.recent,
-  ]);
+  }, [queryKey]);
+
+  const current = result?.key === queryKey ? result : null;
+  const data = current?.data;
+  const loading = !current;
+  const error = current?.error;
 
   const currentSort = params.sort ?? "date";
   const currentOrder = params.order ?? "desc";
@@ -120,18 +128,6 @@ export default function TradesTable({ params, onParamsChange }: TradesTableProps
     } else {
       onParamsChange({ sort: sortKey, order: DEFAULT_ORDER[sortKey] ?? "desc", offset: "0" });
     }
-  }
-
-  function SortableHeader({ sortKey, label, className }: { sortKey: string; label: string; className?: string }) {
-    return (
-      <th
-        className={`px-4 py-2.5 font-medium whitespace-nowrap cursor-pointer select-none text-zinc-500 ${className ?? ""}`}
-        onClick={() => handleSortClick(sortKey)}
-      >
-        {label}
-        <SortArrow active={currentSort === sortKey} order={currentOrder} />
-      </th>
-    );
   }
 
   if (error) {
@@ -150,15 +146,15 @@ export default function TradesTable({ params, onParamsChange }: TradesTableProps
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="border-b border-zinc-800 text-left">
-              <SortableHeader sortKey="date" label="Trade Date" />
-              <SortableHeader sortKey="filingdate" label="Filed" />
-              <SortableHeader sortKey="name" label="Person" />
+              <SortableHeader sortKey="date" label="Trade Date" currentSort={currentSort} currentOrder={currentOrder} onSort={handleSortClick} />
+              <SortableHeader sortKey="filingdate" label="Filed" currentSort={currentSort} currentOrder={currentOrder} onSort={handleSortClick} />
+              <SortableHeader sortKey="name" label="Person" currentSort={currentSort} currentOrder={currentOrder} onSort={handleSortClick} />
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500">Pty</th>
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500">State</th>
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500 max-w-[160px]">Asset</th>
-              <SortableHeader sortKey="ticker" label="Ticker" />
+              <SortableHeader sortKey="ticker" label="Ticker" currentSort={currentSort} currentOrder={currentOrder} onSort={handleSortClick} />
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500">Type</th>
-              <SortableHeader sortKey="amount" label="Amount" />
+              <SortableHeader sortKey="amount" label="Amount" currentSort={currentSort} currentOrder={currentOrder} onSort={handleSortClick} />
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500">Price</th>
               <th className="px-4 py-2.5 font-medium whitespace-nowrap text-zinc-500">PDF</th>
             </tr>
@@ -248,7 +244,7 @@ export default function TradesTable({ params, onParamsChange }: TradesTableProps
         <span className="text-xs text-zinc-600 font-mono">
           {loading
             ? "Loading..."
-            : `${offset + 1}–${Math.min(offset + (data?.returned ?? 0), total)} of ${total.toLocaleString()}`}
+            : total === 0 ? "0 results" : `${offset + 1}–${Math.min(offset + (data?.returned ?? 0), total)} of ${total.toLocaleString()}`}
         </span>
 
         <p className="text-xs text-zinc-600">Made with love by <Link className="underline" href="https://crnicholson.com">Charlie Nicholson.</Link> Open source on <Link className="underline" href="https://github.com/crnicholson/capitol-api">GitHub</Link></p>

@@ -12,10 +12,10 @@ function buildQueryString(params: QueryParams): string {
   return query.toString();
 }
 
-export async function fetchTrades(params: QueryParams): Promise<TradesResponse> {
+export async function fetchTrades(params: QueryParams, signal?: AbortSignal): Promise<TradesResponse> {
   if (IS_STATIC_MODE) return queryStaticTrades(params);
   const qs = buildQueryString(params);
-  const res = await fetch(`${BASE}/api/trades${qs ? "?" + qs : ""}`);
+  const res = await fetch(`${BASE}/api/trades${qs ? "?" + qs : ""}`, { signal });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

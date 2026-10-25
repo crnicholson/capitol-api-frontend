@@ -21,7 +21,7 @@ export default function StatusBadge() {
     status.cacheStatus === "complete"
       ? "bg-emerald-500"
       : status.cacheStatus === "in_progress"
-      ? "bg-amber-400"
+      ? "bg-zinc-400"
       : "bg-zinc-600";
 
   const label =

@@ -5,6 +5,7 @@ import type { QueryParams } from "@/lib/types";
 interface FilterBarProps {
   params: QueryParams;
   onChange: (params: QueryParams) => void;
+  showPageSize?: boolean;
 }
 
 const inputCls =
@@ -13,7 +14,7 @@ const inputCls =
 const selectCls =
   "bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs rounded px-2.5 py-1.5 w-full focus:outline-none focus:border-zinc-600";
 
-export default function FilterBar({ params, onChange }: FilterBarProps) {
+export default function FilterBar({ params, onChange, showPageSize = true }: FilterBarProps) {
   function set(key: keyof QueryParams, value: string) {
     onChange({ ...params, [key]: value, offset: "0" });
   }
@@ -25,8 +26,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
   return (
     <div className="border-b border-zinc-800 px-6 py-3 flex flex-wrap items-end gap-3">
       <div className="flex flex-col gap-1 min-w-[120px]">
-        <label className="text-zinc-600 text-xs">Person</label>
+        <label htmlFor="filter-person" className="text-zinc-400 text-xs">Person</label>
         <input
+          id="filter-person"
           className={inputCls}
           placeholder="Pelosi"
           value={params.person ?? ""}
@@ -35,8 +37,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[100px]">
-        <label className="text-zinc-600 text-xs">Ticker</label>
+        <label htmlFor="filter-ticker" className="text-zinc-400 text-xs">Ticker</label>
         <input
+          id="filter-ticker"
           className={inputCls}
           placeholder="AAPL"
           value={params.ticker ?? ""}
@@ -45,8 +48,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[80px]">
-        <label className="text-zinc-600 text-xs">State</label>
+        <label htmlFor="filter-state" className="text-zinc-400 text-xs">State</label>
         <input
+          id="filter-state"
           className={inputCls}
           placeholder="CA"
           maxLength={2}
@@ -56,8 +60,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[120px]">
-        <label className="text-zinc-600 text-xs">Party</label>
+        <label htmlFor="filter-party" className="text-zinc-400 text-xs">Party</label>
         <select
+          id="filter-party"
           className={selectCls}
           value={params.party ?? ""}
           onChange={(e) => set("party", e.target.value)}
@@ -70,8 +75,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[120px]">
-        <label className="text-zinc-600 text-xs">Category</label>
+        <label htmlFor="filter-category" className="text-zinc-400 text-xs">Category</label>
         <select
+          id="filter-category"
           className={selectCls}
           value={params.category ?? ""}
           onChange={(e) => set("category", e.target.value)}
@@ -90,8 +96,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[110px]">
-        <label className="text-zinc-600 text-xs">From</label>
+        <label htmlFor="filter-from" className="text-zinc-400 text-xs">From</label>
         <input
+          id="filter-from"
           type="date"
           className={inputCls}
           value={params.from ?? ""}
@@ -100,8 +107,9 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
       </div>
 
       <div className="flex flex-col gap-1 min-w-[110px]">
-        <label className="text-zinc-600 text-xs">To</label>
+        <label htmlFor="filter-to" className="text-zinc-400 text-xs">To</label>
         <input
+          id="filter-to"
           type="date"
           className={inputCls}
           value={params.to ?? ""}
@@ -109,9 +117,10 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-1 min-w-[80px]">
-        <label className="text-zinc-600 text-xs">Limit</label>
+      {showPageSize && <div className="flex flex-col gap-1 min-w-[80px]">
+        <label htmlFor="filter-limit" className="text-zinc-400 text-xs">Limit</label>
         <select
+          id="filter-limit"
           className={selectCls}
           value={params.limit ?? "50"}
           onChange={(e) => set("limit", e.target.value)}
@@ -121,7 +130,7 @@ export default function FilterBar({ params, onChange }: FilterBarProps) {
           <option value="100">100</option>
           <option value="250">250</option>
         </select>
-      </div>
+      </div>}
 
       <button
         onClick={reset}
