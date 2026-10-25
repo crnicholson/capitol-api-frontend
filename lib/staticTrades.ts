@@ -1,4 +1,5 @@
 import type { Trade, TradesResponse, StatusResponse, QueryParams } from "./types";
+import { currentTradeDate, isFutureTrade } from "./analytics";
 
 interface TradesFile {
   metadata: {
@@ -59,7 +60,8 @@ function sortTrades(trades: Trade[], sortKey: string, order?: string): Trade[] {
 
 export async function queryStaticTrades(params: QueryParams): Promise<TradesResponse> {
   const { trades } = await loadTradesFile();
-  const filtered = trades.filter((t) => matchesParams(t, params));
+  const today = currentTradeDate();
+  const filtered = trades.filter((t) => !isFutureTrade(t, today) && matchesParams(t, params));
 
   if (params.recent) {
     const n = parseInt(params.recent, 10) || 25;
@@ -80,6 +82,7 @@ export async function queryStaticTrades(params: QueryParams): Promise<TradesResp
 export async function getStaticStatus(): Promise<StatusResponse> {
   const { metadata, trades } = await loadTradesFile();
   const years = metadata.years ?? [];
+  const today = currentTradeDate();
 
   return {
     fetchRunning: false,
@@ -89,7 +92,7 @@ export async function getStaticStatus(): Promise<StatusResponse> {
     cacheStatus: "complete",
     cacheLastUpdated: metadata.lastUpdated ?? null,
     cacheYears: years,
-    totalTrades: trades.length,
+    totalTrades: trades.filter((trade) => !isFutureTrade(trade, today)).length,
     config: {
       yearsStart: years.length ? Math.min(...years) : 0,
       yearsEnd: years.length ? Math.max(...years) : 0,

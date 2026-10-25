@@ -1,12 +1,13 @@
 import type { TradesResponse, StatusResponse, QueryParams } from "./types";
 import { IS_STATIC_MODE } from "./config";
 import { queryStaticTrades, getStaticStatus } from "./staticTrades";
+import { constrainTradeDates } from "./analytics";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 function buildQueryString(params: QueryParams): string {
   const query = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
+  for (const [k, v] of Object.entries(constrainTradeDates(params))) {
     if (v !== undefined && v !== "") query.set(k, v);
   }
   return query.toString();
@@ -22,9 +23,10 @@ export async function fetchTrades(params: QueryParams, signal?: AbortSignal): Pr
 
 export async function fetchStatus(): Promise<StatusResponse> {
   if (IS_STATIC_MODE) return getStaticStatus();
-  const res = await fetch(`${BASE}/api/status`);
+  const [res, trades] = await Promise.all([fetch(`${BASE}/api/status`), fetchTrades({ limit: "1" })]);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const status: StatusResponse = await res.json();
+  return { ...status, totalTrades: trades.total };
 }
 
 export function buildQueryUrl(params: QueryParams): string {

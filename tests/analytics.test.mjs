@@ -5,7 +5,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../lib/analytics.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { analyticsParams, dateIsValid, monthRange, stateMetricValue, summarizeFilingLag, summarizeTrades } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
+const { analyticsParams, constrainTradeDates, currentTradeDate, dateIsValid, isFutureTrade, monthRange, stateMetricValue, summarizeFilingLag, summarizeTrades } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
 function trade(id, date, category, state = "CA", ticker = "AAPL", member = "Jane Smith") {
   return { id, transaction: { tradeDate: date, category }, person: { name: member, state, party: "Democrat", bioguideId: member }, asset: { ticker, name: ticker } };
@@ -22,18 +22,34 @@ test("charts include every matching record and are independent of table paginati
   assert.equal(result.memberCount, 1);
 });
 
-test("timeline fills missing months and excludes invalid and future dates only from the timeline", () => {
+test("future trades are excluded from all aggregates while invalid dates stay out of the timeline", () => {
   const result = summarizeTrades([
     trade("1", "2026-01-15", "buy"),
     trade("2", "2026-03-01", "sell"),
-    trade("3", "2026-12-26", "buy"),
+    trade("3", "2026-12-26", "buy", "NY", "FUTU", "Future Member"),
     trade("4", "2026-02-30", "exchange"),
     trade("5", "", "gift"),
   ], "2026-10-24");
   assert.deepEqual(result.timeline.map(({ key, total }) => [key, total]), [["2026-01", 1], ["2026-02", 0], ["2026-03", 1]]);
-  assert.equal(result.undated, 3);
-  assert.equal(result.totals.total, 5);
+  assert.equal(result.undated, 2);
+  assert.equal(result.totals.total, 4);
+  assert.equal(result.totals.buy, 1);
+  assert.equal(result.states.some((group) => group.key === "NY"), false);
+  assert.equal(result.stocks.some((group) => group.key === "FUTU"), false);
+  assert.equal(result.members.some((group) => group.name === "Future Member"), false);
+  assert.equal(result.parties.reduce((sum, [, count]) => sum + count, 0), 4);
   assert.equal(result.totals.other, 2);
+});
+
+test("future dates are capped using the Eastern calendar day, including around UTC midnight", () => {
+  assert.equal(currentTradeDate(new Date("2026-10-25T03:59:59Z")), "2026-10-24");
+  assert.equal(currentTradeDate(new Date("2026-10-25T04:00:00Z")), "2026-10-25");
+  assert.equal(currentTradeDate(new Date("2026-01-01T04:59:59Z")), "2025-12-31");
+  assert.equal(isFutureTrade(trade("future", "2026-12-26", "buy"), "2026-10-24"), true);
+  assert.equal(isFutureTrade(trade("today", "2026-10-24", "buy"), "2026-10-24"), false);
+  assert.equal(isFutureTrade(trade("past", "2026-10-23", "buy"), "2026-10-24"), false);
+  assert.deepEqual(constrainTradeDates({ to: "2026-12-26" }, "2026-10-24"), { to: "2026-10-24" });
+  assert.deepEqual(constrainTradeDates({ to: "2026-01-01" }, "2026-10-24"), { to: "2026-01-01" });
 });
 
 test("rankings preserve missing data counts and distinct members and tickers", () => {

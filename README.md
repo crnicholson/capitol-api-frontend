@@ -16,11 +16,13 @@ the trade table's page size:
 - Members: reporting members ranked by their household's transaction count.
 
 Select a month, ticker, member, or state to inspect its trades and source filings.
-The views work with both the live API and the static snapshot. Missing, invalid,
-and future trade dates are excluded from the timeline and counted in its note.
+The views work with both the live API and the static snapshot. Missing or invalid
+trade dates are excluded from the timeline and counted in its note. All queries,
+downloads, totals, and visualizations exclude future-dated trades using the current
+date in America/New_York. The source data remains unchanged.
 Charts report transaction counts, not profits or investment returns.
 
-Run the aggregation checks with `node --test tests/analytics.test.mjs`.
+Run the aggregation and query checks with `node --test tests/*.test.mjs`.
 
 ## API Builder
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { fetchTrades } from "@/lib/api";
-import { analyticsParams, monthRange, summarizeTrades, type Breakdown, type MonthGroup, type TradeGroup } from "@/lib/analytics";
+import { analyticsParams, currentTradeDate, monthRange, summarizeTrades, type Breakdown, type MonthGroup, type TradeGroup } from "@/lib/analytics";
 import type { QueryParams, Trade } from "@/lib/types";
 import styles from "./Insights.module.css";
 import StateMap from "./StateMap";
@@ -106,7 +106,7 @@ export default function Insights({ params, onExplore, onReset }: Props) {
   }, [queryKey, attempt]);
 
   const current = result?.key === queryKey ? result : null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = currentTradeDate();
   const data = useMemo(() => current && !current.error ? summarizeTrades(current.trades, today) : null, [current, today]);
   const loading = !current;
   const filtered = Object.keys(JSON.parse(queryKey)).length > 0;
@@ -124,7 +124,7 @@ export default function Insights({ params, onExplore, onReset }: Props) {
       {view === "map" && <StateMap groups={data.states} trades={current?.trades || []} today={today} onExplore={onExplore} />}
       {view === "stocks" && <><section className={styles.panel}><div className={styles.panelHeader}><div><h2>What are members trading?</h2><p>The 15 most active tickers, ranked by transaction count</p></div><Legend /></div><Ranking groups={data.stocks} kind="stocks" limit={15} onSelect={(group) => onExplore({ ticker: group.key })} /><div className={styles.panelFooter}><span>Select a ticker to inspect its transactions and source filings.</span><span>{format(data.missingTicker)} records without tickers excluded</span></div></section><section className={styles.panel}><div className={styles.panelHeader}><div><h2>Activity by party</h2><p>Raw transaction counts in the current results</p></div></div><div className={styles.partyRows}>{data.parties.map(([party, count]) => <button key={party} className={styles.partyRow} disabled={party === "Unknown"} onClick={() => onExplore({ party })}><span><i style={{ background: party.toLowerCase().startsWith("d") ? "#60a5fa" : party.toLowerCase().startsWith("r") ? "#f87171" : "#a1a1aa" }} />{party}</span><span className={styles.partyTrack}><i style={{ width: `${count / data.totals.total * 100}%` }} /></span><strong>{format(count)}</strong><small>{(count / data.totals.total * 100).toFixed(1)}%</small></button>)}</div><div className={styles.panelFooter}><span>Counts are not adjusted for party size or number of reporting members.</span></div></section></>}
       {view === "members" && <><section className={styles.panel}><div className={styles.panelHeader}><div><h2>Who is reporting the most trades?</h2><p>The 20 most active reporting members and their households</p></div><Legend /></div><Ranking groups={data.members} kind="members" limit={20} onSelect={(group) => onExplore({ person: group.name })} /><div className={styles.panelFooter}><span>Select a member to explore the original disclosures.</span><span>Ranked by transaction count</span></div></section></>}
-      <footer className={styles.notes}><span>U.S. House periodic transaction reports. Charts count reported transactions, including spouse and dependent holdings.</span>{data.undated > 0 && <span>{format(data.undated)} {data.undated === 1 ? "record with a missing, invalid, or future trade date is" : "records with missing, invalid, or future trade dates are"} excluded from the timeline only.</span>}<span>Disclosures report amount ranges and do not establish investment returns.</span></footer>
+      <footer className={styles.notes}><span>U.S. House periodic transaction reports. Charts count reported transactions, including spouse and dependent holdings.</span>{data.undated > 0 && <span>{format(data.undated)} {data.undated === 1 ? "record with a missing or invalid trade date is" : "records with missing or invalid trade dates are"} excluded from the timeline only.</span>}<span>Future-dated trades are excluded. Disclosures report amount ranges and do not establish investment returns.</span></footer>
     </> : null}
   </main>;
 }

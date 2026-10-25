@@ -1,5 +1,18 @@
 import type { QueryParams, Trade } from "./types";
 
+export function currentTradeDate(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+export function isFutureTrade(trade: Trade, today = currentTradeDate()): boolean {
+  const date = trade.transaction?.tradeDate;
+  return typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date > today;
+}
+
+export function constrainTradeDates(params: QueryParams, today = currentTradeDate()): QueryParams {
+  return { ...params, to: params.to && params.to < today ? params.to : today };
+}
+
 export interface Breakdown {
   total: number;
   buy: number;
@@ -91,6 +104,7 @@ export function summarizeTrades(trades: Trade[], today: string) {
   }
 
   for (const trade of trades) {
+    if (isFutureTrade(trade, today)) continue;
     addTrade(totals, trade);
     const person = trade.person;
     if (person?.name) {
